@@ -125,16 +125,89 @@ DB 연결:
 tripton -> mariadb:3306
 ```
 
-## 외부 접속
+## Docker 실행 방법
 
-공유기 포트포워딩은 다음처럼 설정합니다.
+홈서버 폴더로 이동한 뒤 실행합니다.
 
-```text
-외부 8084 -> 홈서버 내부 IP 8084
-외부 8085 -> 홈서버 내부 IP 8085
+```bash
+cd /Users/aaa/Desktop/home-server
+docker compose up -d --build
 ```
 
-접속 주소:
+상태 확인:
+
+```bash
+docker compose ps
+```
+
+중지:
+
+```bash
+cd /Users/aaa/Desktop/home-server
+docker compose down
+```
+
+로그 보기:
+
+```bash
+cd /Users/aaa/Desktop/home-server
+docker compose logs -f
+```
+
+로컬 접속 확인:
+
+```text
+http://localhost:8084 -> SecondaryBook
+http://localhost:8085 -> TripToN
+```
+
+## 외부 접속
+
+홈서버 Mac의 내부 IP를 확인합니다.
+
+```bash
+ifconfig | grep "inet "
+```
+
+현재 홈서버 내부 IP는 다음 값으로 사용합니다.
+
+```text
+192.168.0.15
+```
+
+공유기 관리자 페이지에 접속합니다.
+
+```text
+http://192.168.0.1
+```
+
+먼저 `DHCP 고정 할당`, `주소 예약`, `IP/MAC 바인딩` 같은 메뉴에서 홈서버 Mac의 내부 IP를 고정합니다.
+
+```text
+홈서버 IP: 192.168.0.15
+```
+
+그 다음 `포트포워딩`, `NAT`, `가상 서버` 같은 메뉴에서 규칙 2개를 추가합니다.
+
+```text
+이름: SecondaryBook
+프로토콜: TCP
+외부 포트: 8084
+내부 IP: 192.168.0.15
+내부 포트: 8084
+```
+
+```text
+이름: TripToN
+프로토콜: TCP
+외부 포트: 8085
+내부 IP: 192.168.0.15
+내부 포트: 8085
+```
+
+공유기 설정 후 휴대폰 와이파이를 끄고 LTE/5G에서 접속을 테스트합니다.
+
+공인 IP는 네이버에 `내 아이피`를 검색해서 확인합니다.
 
 ```text
 http://공인IP:8084 -> SecondaryBook
