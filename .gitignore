@@ -1,0 +1,38 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker and local runtime artifacts
+docker-compose.override.yml
+*.pid
+*.sock
+
+# Build outputs and dependency folders that may appear from mounted projects
+target/
+build/
+dist/
+out/
+node_modules/
+
+# Database and uploaded/runtime data
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+data/

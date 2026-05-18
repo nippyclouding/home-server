@@ -1,0 +1,133 @@
+services:
+    nginx:
+      image: nginx:alpine
+      container_name: home-nginx
+      ports:
+        - "8085:8085"
+        - "8084:8084"
+      volumes:
+        - ./nginx:/etc/nginx/conf.d:ro
+      depends_on:
+        - tripton
+        - secondarybook
+
+    tripton:
+      image: tripton:local
+      container_name: tripton
+      restart: on-failure
+      expose:
+        - "8085"
+      environment:
+        SERVER_PORT: "8085"
+        SPRING_PROFILES_ACTIVE: "prod"
+        SERVER_SERVLET_SESSION_COOKIE_SECURE: "false"
+        SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+        DB_URL: "jdbc:mariadb://mariadb:3306/TripToNDB?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8"
+        DB_USERNAME: "root"
+        DB_PASSWORD: "${TRIPTON_DB_PASSWORD}"
+        GEMINI_API_KEY: "${GEMINI_API_KEY}"
+        ADMIN_LOGIN_ID: "${TRIPTON_ADMIN_LOGIN_ID}"
+        ADMIN_PASSWORD: "${TRIPTON_ADMIN_PASSWORD}"
+      depends_on:
+        mariadb:
+          condition: service_healthy
+
+    secondarybook:
+      build: /Users/aaa/Desktop/Project/SecondaryBook/mvc
+      image: secondarybook:local
+      container_name: secondarybook
+      restart: on-failure
+      expose:
+        - "8080"
+      environment:
+        DB_DRIVER: "com.mysql.cj.jdbc.Driver"
+        DB_URL: "jdbc:mysql://secondarybook-mysql:3306/secondHandBook?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true"
+        DB_USERNAME: "root"
+        DB_PASSWORD: "${SECONDARYBOOK_DB_PASSWORD}"
+        REDIS_HOST: "secondarybook-redis"
+        REDIS_PORT: "6379"
+        REDIS_PASSWORD: ""
+        REDIS_SSL_ENABLED: "false"
+        FILE_DIR: "/app/uploads"
+        TOSS_SECRET_KEY: "${TOSS_SECRET_KEY}"
+        TOSS_CLIENT_KEY: "${TOSS_CLIENT_KEY}"
+        TOSS_BASE_URL: "https://api.tosspayments.com"
+        KAKAO_REST_API_KEY: "${KAKAO_REST_API_KEY}"
+        KAKAO_BOOK_URL: "https://dapi.kakao.com/v3/search/book"
+        KAKAO_MAP_URL: "https://dapi.kakao.com"
+        KAKAO_MAP_JS_KEY: "${KAKAO_MAP_JS_KEY}"
+        NAVER_API_CLIENT_ID: "${NAVER_API_CLIENT_ID}"
+        NAVER_API_CLIENT_SECRET: "${NAVER_API_CLIENT_SECRET}"
+        KAKAO_LOGIN_URL: "https://kauth.kakao.com"
+        KAKAO_API_URL: "https://kapi.kakao.com"
+        KAKAO_CLIENT_ID: "${KAKAO_CLIENT_ID}"
+        KAKAO_REDIRECT_URI: "http://localhost:8084/auth/kakao/callback"
+        KAKAO_CLIENT_SECRET: "${KAKAO_CLIENT_SECRET}"
+        NAVER_LOGIN_URL: "https://nid.naver.com"
+        NAVER_API_URL: "https://openapi.naver.com"
+        NAVER_CLIENT_ID: "${NAVER_CLIENT_ID}"
+        NAVER_CLIENT_SECRET: "${NAVER_CLIENT_SECRET}"
+        NAVER_REDIRECT_URI: "http://localhost:8084/auth/naver/callback"
+        MAIL_USERNAME: "${MAIL_USERNAME}"
+        MAIL_PASSWORD: "${MAIL_PASSWORD}"
+        AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
+        AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+        AWS_S3_BUCKET: "${AWS_S3_BUCKET}"
+        AWS_S3_REGION: "ap-northeast-2"
+        AWS_CLOUDFRONT_DOMAIN: "${AWS_CLOUDFRONT_DOMAIN}"
+        ADMIN_LOGIN_CODE1: "${ADMIN_LOGIN_CODE1}"
+        ADMIN_LOGIN_CODE2: "${ADMIN_LOGIN_CODE2}"
+        AES_SECRET_KEY: "${AES_SECRET_KEY}"
+        APP_CORS_ALLOWED_ORIGINS: "http://localhost:8084"
+      volumes:
+        - secondarybook-uploads:/app/uploads
+      depends_on:
+        secondarybook-mysql:
+          condition: service_healthy
+        secondarybook-redis:
+          condition: service_started
+
+    mariadb:
+      image: mariadb:11
+      container_name: tripton-mariadb
+      environment:
+        MARIADB_ROOT_PASSWORD: "${TRIPTON_DB_PASSWORD}"
+        MARIADB_DATABASE: "TripToNDB"
+      volumes:
+        - tripton-db:/var/lib/mysql
+      ports:
+        - "3307:3306"
+      healthcheck:
+        test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$${MARIADB_ROOT_PASSWORD}"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
+
+    secondarybook-mysql:
+      image: mysql:8.0
+      container_name: secondarybook-mysql
+      environment:
+        MYSQL_ROOT_PASSWORD: "${SECONDARYBOOK_DB_PASSWORD}"
+        MYSQL_DATABASE: "secondHandBook"
+      volumes:
+        - secondarybook-db:/var/lib/mysql
+        - /Users/aaa/Desktop/Project/SecondaryBook/mvc/src/main/java/MySQL.create.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      ports:
+        - "3308:3306"
+      healthcheck:
+        test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
+
+    secondarybook-redis:
+      image: redis:7-alpine
+      container_name: secondarybook-redis
+      restart: on-failure
+      expose:
+        - "6379"
+
+volumes:
+  tripton-db:
+  secondarybook-db:
+  secondarybook-uploads:
