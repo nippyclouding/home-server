@@ -140,6 +140,14 @@ docker compose up -d --build
 docker compose ps
 ```
 
+재실행:
+
+```bash
+docker compose down
+docker compose up -d
+docker compose ps
+```
+
 중지:
 
 ```bash
